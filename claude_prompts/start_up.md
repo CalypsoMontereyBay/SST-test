@@ -7,8 +7,8 @@ This repository will be used to organize and enable our tests to collect data of
 ## Prompts
 
 1. Read this file.  Execute the 1st task under "Claude/CLAUDE.md file"
-2. Read this file.  Execute the 1st task under "Basic start up"
-3. Read this file.  Execute the 1st task under "Skills"
+2. Read this file.  Execute the 1st task under "Skills"
+3. Read this file.  Execute the 1st task under "Basic start up"
 
 ## Claude
 
