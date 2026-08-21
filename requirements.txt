@@ -1,0 +1,13 @@
+numpy
+scipy
+pandas
+matplotlib
+seaborn
+xarray
+h5netcdf
+netCDF4
+cftime
+requests
+tqdm
+IPython
+pytest
