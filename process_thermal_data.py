@@ -352,46 +352,6 @@ def build_source(target: str, gain: str, fps_hint: float):
     return VideoSource(target, gain)
 
 # --------------------------------------------------------------------------
-# Focal Plane Array temperature log (from a separate live-capture logger,
-# e.g. flirpy's camera.get_fpa_temperature() polled during acquisition and
-# written to CSV as columns t_sec,fpa_temp_C). This module never talks to a
-# live camera itself -- it only reads already-captured files -- so FPA temp
-# has to be logged during capture and joined in here by nearest timestamp.
-# --------------------------------------------------------------------------
-
-def load_fpa_log(path: str) -> tuple[np.ndarray, np.ndarray]:
-    """Read a CSV with columns t_sec,fpa_temp_C. Returns (t_sec, fpa_C), sorted."""
-    t, fpa = [], []
-    with open(path, newline="") as f:
-        reader = csv.DictReader(f)
-        cols = reader.fieldnames or []
-        if "t_sec" not in cols or "fpa_temp_C" not in cols:
-            sys.exit(f"{path!r} must have columns t_sec,fpa_temp_C -- found {cols}")
-        for row in reader:
-            try:
-                t.append(float(row["t_sec"]))
-                fpa.append(float(row["fpa_temp_C"]))
-            except ValueError:
-                continue  # skip blank/malformed rows
-    if not t:
-        sys.exit(f"{path!r} had no usable rows")
-    t = np.asarray(t, dtype=np.float64)
-    fpa = np.asarray(fpa, dtype=np.float64)
-    order = np.argsort(t)
-    return t[order], fpa[order]
- 
- 
-def nearest_fpa(t_query: float, t_log: np.ndarray, fpa_log: np.ndarray) -> float:
-    """Nearest-neighbour lookup of FPA temp at time t_query (seconds)."""
-    idx = np.searchsorted(t_log, t_query)
-    idx = int(np.clip(idx, 1, len(t_log) - 1))
-    left_t, right_t = t_log[idx - 1], t_log[idx]
-    if (t_query - left_t) < (right_t - t_query):
-        idx -= 1
-    return float(fpa_log[idx])
- 
-
-# --------------------------------------------------------------------------
 # ROI + verdict
 # --------------------------------------------------------------------------
 
