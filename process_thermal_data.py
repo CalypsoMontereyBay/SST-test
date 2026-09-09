@@ -24,12 +24,6 @@ PLAUSIBLE_C = (-50.0, 200.0)
 
 TIFF_EXTS = (".tif", ".tiff", ".TIF", ".TIFF")
 
-EIGHT_BIT_PIX_FMTS = {
-    "gray", "yuv420p", "yuvj420p", "yuv422p", "yuvj422p", "yuv444p", "yuvj444p",
-    "nv12", "nv21", "bgr24", "rgb24", "bgra", "rgba", "argb", "abgr", "pal8",
-    "uyvy422", "yuyv422",
-}
-
 # E[max-min] of n Gaussian samples, in sigma. Monte Carlo, 12k-40k trials.
 _RANGE_N = np.array([4, 9, 16, 25, 49, 100, 169, 256, 400, 625, 900,
                      1444, 2500, 4096, 6400, 10000], dtype=float)
@@ -49,13 +43,6 @@ def counts_to_celsius(counts: np.ndarray, gain: str) -> np.ndarray:
 def plausibility(counts: np.ndarray, gain: str) -> float:
     t = counts_to_celsius(counts, gain)
     return float(np.mean((t >= PLAUSIBLE_C[0]) & (t <= PLAUSIBLE_C[1])))
-
-
-def looks_like_upscaled_8bit(counts: np.ndarray) -> bool:
-    """All values multiples of 257/256 => only 256 levels => 8-bit source."""
-    flat = counts.reshape(-1)
-    s = flat[:: max(1, flat.size // 200_000)]
-    return bool(np.all(s % 257 == 0) or np.all(s % 256 == 0))
 
 
 def natural_key(path: str):
@@ -352,7 +339,7 @@ def build_source(target: str, gain: str, fps_hint: float):
     return VideoSource(target, gain)
 
 # --------------------------------------------------------------------------
-# ROI + verdict
+# ROI
 # --------------------------------------------------------------------------
 
 def roi_bounds(h: int, w: int, size: int):
@@ -360,35 +347,6 @@ def roi_bounds(h: int, w: int, size: int):
         sys.exit(f"ROI {size}x{size} does not fit in a {w}x{h} frame")
     y0, x0 = (h - size) // 2, (w - size) // 2
     return y0, y0 + size, x0, x0 + size
-
-
-def verdict(src, frame: np.ndarray, gain: str) -> bool:
-    score = plausibility(frame, gain)
-    print(f"Decode : plausibility={score:.1%}")
-
-    if src.kind == "video" and src.pix_fmt in EIGHT_BIT_PIX_FMTS:
-        print(f"\n  VERDICT: NOT radiometric — stream is {src.pix_fmt}, 8 bits per "
-              "component.\n  This is AGC display video; temperatures are unrecoverable.")
-        return False
-
-    if src.kind == "tiff" and src.dtype == np.uint8:
-        print("\n  VERDICT: NOT radiometric — these TIFFs are 8-bit.\n"
-              "  Re-export with USB Video Mode set to IR16 (pre-AGC).")
-        return False
-
-    if looks_like_upscaled_8bit(frame):
-        print("\n  VERDICT: NOT radiometric — every value is a multiple of 257/256,\n"
-              "  so the data only ever had 256 levels. 8-bit widened to 16.")
-        return False
-
-    if score < 0.5:
-        print(f"\n  VERDICT: UNRELIABLE — only {score:.1%} of pixels imply a sensible\n"
-              "  temperature. Likely the wrong --gain, or 16-bit data that is not\n"
-              "  TLinear (raw flux counts have no temperature mapping).")
-        return False
-
-    print("\n  VERDICT: looks like genuine 16-bit TLinear data.")
-    return True
 
 
 def geometry_note(src) -> None:
@@ -503,8 +461,7 @@ def summarise(rows: list[dict], roi_size: int, iqr_k: float, chunk_size: int) ->
 # --------------------------------------------------------------------------
 
 def run(target: str, gain: str, roi_size: int, csv_path: str | None,
-        max_frames: int | None, force: bool, probe_only: bool,
-        fps_hint: float, expect_C: float | None,
+        max_frames: int | None, fps_hint: float, expect_C: float | None,
         iqr_k: float = 1.5, chunk_size: int = 115) -> None:
     src = build_source(target, gain, fps_hint)
     print(f"\nInput  : {target}")
@@ -512,7 +469,6 @@ def run(target: str, gain: str, roi_size: int, csv_path: str | None,
     geometry_note(src)
 
     frame0 = src.first_frame()
-    ok = verdict(src, frame0, gain)
 
     lo, hi = int(frame0.min()), int(frame0.max())
     print(f"\n  raw counts : min={lo}  max={hi}  mean={frame0.mean():.1f}")
@@ -526,26 +482,6 @@ def run(target: str, gain: str, roi_size: int, csv_path: str | None,
 
     if expect_C is not None:
         expectation_check(frame0, (y0, y1, x0, x1), expect_C, gain)
-
-    if probe_only:
-        if ok:
-            roi = counts_to_celsius(frame0[y0:y1, x0:x1], gain)
-            print(f"\n  ROI {roi_size}x{roi_size} at rows {y0}:{y1}, cols {x0}:{x1} "
-                  f"({roi.size} px)")
-            print(f"    frame 0: min={roi.min():.3f}  max={roi.max():.3f}  "
-                  f"mean={roi.mean():.3f} C")
-        else:
-            print("\n  In the Boson GUI: Image Appearance -> USB Video Mode Controls")
-            print("  -> USB Video Mode = IR16 (pre-AGC), with radiometry/TLinear on.")
-            print("  Select the Boson COM port first or settings will not apply.")
-        print()
-        return
-
-    if not ok and not force:
-        sys.exit("\nRefusing to report temperatures from non-radiometric data.\n"
-                 "Run --probe for detail, or --force to override (output invalid).\n")
-    if not ok:
-        print("\n  --force given. THESE ARE NOT VALID TEMPERATURES.")
 
     print(f"\nROI {roi_size}x{roi_size} at rows {y0}:{y1}, cols {x0}:{x1}  "
           f"(gain={gain}, {GAIN_SCALE_K_PER_COUNT[gain]} K/count)")
@@ -596,14 +532,10 @@ def main() -> None:
     ap.add_argument("--gain", choices=("high", "low"), default="high",
                     help="Boson gain state during capture (default high)")
     ap.add_argument("--csv", default=None, help="write per-frame values here")
-    ap.add_argument("--probe", action="store_true",
-                    help="inspect and report whether the data is radiometric, then exit")
     ap.add_argument("--fps", type=float, default=60.0,
                     help="frame rate for TIFF sequences, for the t_sec column "
                          "(default 60; use 30 if Averager Mode was enabled)")
     ap.add_argument("--max-frames", type=int, default=None, help="stop after N frames")
-    ap.add_argument("--force", action="store_true",
-                    help="process non-radiometric data anyway (output invalid)")
     ap.add_argument("--expect", type=float, default=None, metavar="DEG_C",
                     help="known target temperature; checks whether the counts are "
                          "really on a TLinear scale")
@@ -618,7 +550,7 @@ def main() -> None:
     if args.roi < 1:
         sys.exit("--roi must be >= 1")
     run(args.input, args.gain, args.roi, args.csv, args.max_frames,
-        args.force, args.probe, args.fps, args.expect, args.iqr_k, args.chunk)
+        args.fps, args.expect, args.iqr_k, args.chunk)
 
 
 if __name__ == "__main__":
