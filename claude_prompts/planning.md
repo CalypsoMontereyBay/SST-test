@@ -122,7 +122,7 @@ floor are still unmeasured. Questions:
    or Steve McGuire's lab)? That would replace the hot-plate + tape entirely.
    Is it worth a week's delay to borrow one?
 
->A. (1) [RW] ; (2) We do not have a proper calibrated blackbody.  
+>A. (1) [RW] ; (2) We do not have a proper calibrated blackbody.  **IN PROGRESS, ASSUME NO FOR NOW (9/23/26 @ 12:02 PM)**
 
 **B. Emissivity and reflected background**
 
@@ -175,7 +175,7 @@ floor are still unmeasured. Questions:
    pattern, not a shutter event. Can Rob/Christian confirm what was actually observed?
    The checklist's handling of FFC depends on the answer.
 >A. [RW/CP] 
--> CP: Can confirm that the boson camera does FFC. The duplicate pattern comes from the camera temporarily freezing itself while it undos the internal thermal drift. 
+-> RW: Unless set to a manual mode by the user, the boson intelligently fires FFC as needed, which is called External Mode. Using the Boson's SDK and Manual Mode, we can sample the temperature sensor and trigger a FFC. In External Mode, the boson ignores the internal shutter and runs FFC on the scene. The observed video frame freeze is simple: video output is paused during FFC on the GUI app. 
 
 10. The Day-2 checklist says "Set FFC interval -> one that doesnt mess up testing".
     Which do you want: FFC *disabled* during a recording (clean, but drift accrues),
@@ -183,7 +183,10 @@ floor are still unmeasured. Questions:
     *Recommendation: manual, logged. It is the only version where we can measure
     drift and correct for it rather than hoping it cancels.*
 >A. [RW/CP]
--> CP: FFC that is manually triggered at a known time stamp. 
+-> CP: FFC that is manually triggered at a known time stamp, we need to be able to manually trigger FFC during flight for optimal performance.
+-> RW: Other tests we need to run also involve disabling FFC entirely, separate tests for different performance metrics of the camera.
+         For example, we will need to test how error increases with thermal drift across the entire operating temperature range of the camera, meaning FFC
+         must be disabled for such a test to be relevant.
 
 11. Round 1 says "when the boson is not focusing on something ... everything will
     seem warmer" and that FFC removes drift when the object is out of focus. The
@@ -220,6 +223,11 @@ floor are still unmeasured. Questions:
     the *camera housing* (an instrumental effect)? Those need different setups and
     the doc does not distinguish them.
 >A. [RW/CP]
+
+-> RW: Both, flying at the B.S cruise speed of 18 m/s while the camera is attatched to the nose cone will introduce fast, moving air over the camera, which
+      will certainly introduce a non-zero amount of cooling effect on, at the very least, the camera's body and lens.
+      We need to be able to understand what about, and how are our measurements change with both of these variables.
+      Further, if an anemometer is found, fan speed will be denoted. If not, qualitative is the way we will be denoting fan speed, we can also reference the fan model's docs if available to say "Speed Setting X" ≅ N mph.
 
 **F. Logistics for the deliverable**
 
