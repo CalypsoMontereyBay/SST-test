@@ -134,6 +134,9 @@ floor are still unmeasured. Questions:
    instead. Is that your understanding too? Should the checklist record raw
    TLinear and apply emissivity in post, rather than trying to set it on the camera?
 >A. [RW/CP]
+   -> RW: Should be verified by RW, but yes, if user-side emissivity settings don't exist in the gui, we must correct in post.
+      However, if they exist in the SDK, we should set it in camera using software for the real missions.
+
 4. To do that correction at all we need the **reflected background temperature**
    (the apparent temperature of whatever the target is reflecting — i.e. the room,
    or the person standing in front of it). Nothing currently records it. Shall I
