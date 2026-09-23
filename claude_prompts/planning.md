@@ -76,6 +76,156 @@ Guidelines for the planning/design document, which will be named
    the document is for. Add a version number (0.1), today's date, and authors
    (JXP and Claude). Log your work.
 
+### Lab work
+
+1. We are performing a series of in the lab tests on the Boson sensor in preparation for the flight tests.  There are 2 Google docs on "GDrive:Oceanography/Research/Calypso Monterey Bay/Sensors/SST/Lab Tests" describing: (i) our first set of tests and (ii) our planned second set of tests.  Please read both docs.  We are going to generate a detailed checklist for the 2nd set of tests as a separate doc in the Drive.  Discuss this with me before doing so; ask questions in the Q&A section below.  Use Opus 5. Log your work.
+
+#### Q&A
+
+**Claude, 2026-09-23 — questions before drafting the Round-2 checklist.**
+
+I read both Drive docs ("Boson Experiment", 2026-08-02, and "Boson Experiment 2",
+the Day-2 plan) in `GDrive:Oceanography/Research/Calypso Monterey Bay/Sensors/SST/Lab Tests`,
+plus the local `boson_roi_stats.py` / `process_thermal_data.py` / `fpatemp.py`.
+I reduced the Round-1 numbers in `analysis/lab_tests/expt1_reported_stats.py`.
+What that reduction says, and which drives most of the questions below:
+
+- **Distance sweep** (plate at 35 C): means 34.52 / 35.17 / 34.79 C at 15 / 30 / 45 cm
+  — a 0.65 C spread that is *non-monotonic* in distance. That is an uncertainty
+  floor, not a distance effect. The experiment as run cannot detect one.
+- **1 C increment sweep**: bias −1.36 C, scatter 0.56 C rms, measured steps
+  +1.34, +0.21, +1.69, **−0.29**, +2.41. One step of five goes *backwards*.
+  A 1 C change is not yet resolvable step-by-step. Because the commanded
+  temperature rose monotonically in time, drift is fully degenerate with a
+  gain error — the ramp cannot distinguish them.
+- **Noise**: the quoted per-pixel noise is 0.083 / **1.011** / 0.103 C. The middle
+  value is 10x its neighbours and I read it as a typo for 0.101. If ~0.1 C
+  per-pixel is right, the median of a 30x30 ROI averages down to <0.01 C —
+  so the ~1 C scatter above is **not** sensor noise. It is target/scene
+  systematics. Round 2 should be built to attack those, not to re-measure noise.
+
+The Day-2 doc as written repeats Round 1 and adds a wind test. My concern is
+that it would reproduce the same ~1 C floor, because the things that set that
+floor are still unmeasured. Questions:
+
+**A. The missing reference — this is the one that matters most**
+
+1. There is no independent thermometer anywhere in either round. The hot-plate
+   *dial setting* is being used as truth, but a plate dial reports the heater
+   element, not the tape surface, and can easily be off by >1 C. Every accuracy
+   number above is therefore uncalibrated. Can we get a contact reference on the
+   target surface — a thermocouple/thermistor taped under the black tape, or a
+   calibrated hand-held probe read at each setpoint? *Recommendation: yes, and
+   treat the checklist as blocked on it. Without it Round 2 measures repeatability
+   only, and we should say so explicitly rather than report "accuracy".*
+2. Do we have access to a proper calibrated blackbody (e.g. through MBARI, BELS,
+   or Steve McGuire's lab)? That would replace the hot-plate + tape entirely.
+   Is it worth a week's delay to borrow one?
+
+**B. Emissivity and reflected background**
+
+3. Round 1 found the bare plate read ~10 C low from specular reflection, fixed by
+   black electrical tape. But the tape's emissivity was never measured — it is
+   assumed. The earlier "Static Sensor SST Checklist" says to set emissivity 0.98
+   *in the FLIR GUI*; as far as I can tell the Boson's TLinear output has no
+   user emissivity setting, so that correction has to happen in our analysis
+   instead. Is that your understanding too? Should the checklist record raw
+   TLinear and apply emissivity in post, rather than trying to set it on the camera?
+4. To do that correction at all we need the **reflected background temperature**
+   (the apparent temperature of whatever the target is reflecting — i.e. the room,
+   or the person standing in front of it). Nothing currently records it. Shall I
+   add a step: point the camera at a crumpled-foil diffuse reflector at the target
+   position and log that reading at every setpoint?
+5. The Day-2 checklist says "Check tape w/ heat gun". What is that step verifying?
+   I want to write it down correctly, and if the intent is "confirm the tape and
+   the plate are at the same temperature", there is a cleaner way to say it.
+
+**C. Confounds in the design**
+
+6. May I randomise the order of the temperature setpoints, and return to a fixed
+   anchor (say 35 C) between each one? That is what breaks the drift/gain
+   degeneracy identified above. It costs maybe 40 extra minutes.
+   *Recommendation: yes — without it Round 2's increment test is uninterpretable
+   in the same way Round 1's was.*
+7. Ten frames per step was flagged as too few in Round 1, and the Day-2 doc moves
+   to 2-minute videos. At ~60 Hz that is ~7200 frames. Is 2 minutes per setpoint
+   the right dwell, and — more important — how long do we wait after changing the
+   setpoint before we start recording? Nothing specifies a settling time, and
+   plate settling is my leading suspect for the Round-1 scatter.
+   *Recommendation: 10 min settle, then 2 min record, and log the FPA temperature
+   throughout with `fpatemp.py` so settling is visible rather than assumed.*
+8. **Gain state** (high vs low) is never recorded. It is a factor-of-2 in the
+   counts-to-Kelvin conversion, so a mis-recorded gain is a catastrophic error,
+   not a subtle one. I want it logged at the top of every run. Any objection?
+
+**D. FFC**
+
+9. The Round-1 doc says "the camera FFCs every 16 frames". At 60 Hz that would be
+   an FFC every 0.27 s, which I do not believe — I suspect that is the duplicate-frame
+   pattern, not a shutter event. Can Rob/Christian confirm what was actually observed?
+   The checklist's handling of FFC depends on the answer.
+10. The Day-2 checklist says "Set FFC interval -> one that doesnt mess up testing".
+    Which do you want: FFC *disabled* during a recording (clean, but drift accrues),
+    or FFC on a **manual** trigger at known timestamps we log and exclude in analysis?
+    *Recommendation: manual, logged. It is the only version where we can measure
+    drift and correct for it rather than hoping it cancels.*
+11. Round 1 says "when the boson is not focusing on something ... everything will
+    seem warmer" and that FFC removes drift when the object is out of focus. The
+    Boson is normally fixed-focus, so I think this is describing a scene-dependent
+    (non-uniformity / narcissus) effect rather than autofocus. Do you want me to
+    include a dedicated test to pin that down? It matters for the ocean, where the
+    scene fills the frame uniformly and there is no "object" at all.
+
+**E. Scope — the part I think is actually missing**
+
+12. Both rounds test a hot plate. Nothing tests **water**, yet water is the target:
+    it has a different emissivity (~0.99 at nadir but strongly angle-dependent),
+    a cool skin layer of a few tenths of a degree, and a moving, reflecting surface.
+    The earlier "Static Sensor SST Checklist" had a water/skin-layer step that has
+    since dropped out. Should Round 2 add a water-bath target — ideally with a
+    thermometer in the bulk and the camera viewing at a few incidence angles?
+    *Recommendation: yes. This is the closest lab analogue to the actual measurement,
+    and I would rather cut the distance re-test than skip it.*
+13. **Viewing angle** is untested and is the one lab result that flows straight into
+    the flight plan: water emissivity falls off sharply beyond ~40 degrees from nadir,
+    which bounds the usable swath. Can we mount the camera to view the target at,
+    say, 0 / 20 / 40 / 60 degrees? *Recommendation: yes, second priority after the
+    water bath.*
+14. The wind test: "Low / Medium / High" fan settings are not a measurable quantity.
+    Do we have an anemometer? If not I will record fan setting + distance and label
+    the result qualitative. Also — is the intent to test wind cooling the *target*
+    (a real evaporative effect on water, which is physics we want) or wind cooling
+    the *camera housing* (an instrumental effect)? Those need different setups and
+    the doc does not distinguish them.
+
+**F. Logistics for the deliverable**
+
+15. **Format and location**: both existing docs are `.docx` uploads in the Lab Tests
+    folder, owned by chsepere@ucsc.edu. Do you want the checklist as (a) a native
+    Google Doc I create in that folder, (b) a `.docx` matching the existing pattern,
+    or (c) a Markdown file in this repo that gets mirrored to Drive? I lean (a) for
+    editability in the field, with a copy committed here as the version of record.
+16. **Audience and voice**: is this a checklist Rob and Christian execute
+    unsupervised, bench-side? If so I will write it as strict numbered steps with
+    explicit fill-in blanks and pass/fail criteria, not prose — and include a
+    one-page data-recording sheet.
+17. **Do you want the "why" in it?** A checklist that explains why each step exists
+    is longer but survives contact with a student who hits something unexpected.
+    *Recommendation: yes, as short bracketed notes.*
+18. **Schedule and effort**: the Undergrad Team notes point at the week of
+    2026-10-26 or shortly after. Everything above is roughly a full day of bench
+    time, maybe two. If that is too much, tell me and I will cut — my priority
+    order would be: reference thermometer > water bath > randomised increments >
+    viewing angle > wind > distance re-test.
+19. **Where does the raw data go?** Nothing in either doc says. Proposed convention:
+    `data/lab_tests/2026-MM-DD/<run_id>/` with the TIFF sequence, the `fpatemp.py`
+    CSV, and a `run.yaml` of the metadata the checklist collects — so
+    `process_thermal_data.py` can be pointed at a run without anyone guessing.
+    Does that fit how you want the repo organised?
+
+I have not created anything in Drive yet, per the instruction to discuss first.
+
+
 ### Sensor
 
 1. Read this doc. Execute the 1st task under "Sensor / Tasks".
@@ -190,10 +340,70 @@ The "Logs" section will record Claude's work. Please use the following format:
 
 <Detailed description of the work and what you learned>
 
-### <Date> (Short summary of the work)
-
-<Detailed description of the work and what you learned>
-
 ...
 
 ## Logs
+
+### 2026-09-23 (Lab work #1: read both Boson lab-test docs; questions posed for the Round-2 checklist)
+
+Executed the 1st task under "Prompts / Lab work". Located
+`GDrive:Oceanography/Research/Calypso Monterey Bay/Sensors/SST/Lab Tests` and read
+both documents in it: **"Boson Experiment"** (the 2026-08-02 first session, with
+results) and **"Boson Experiment 2"** (the Day-2 plan, an empty-template rerun plus
+a new wind test). Also read the three analysis scripts already in this repo
+(`boson_roi_stats.py`, `process_thermal_data.py`, `fpatemp.py`) and, for scheduling
+and personnel context, the "2026 CMB Undergrad Team" and "SST Test Flight ToDo"
+Drive docs.
+
+**What Round 1 established.** Setup: FLIR Boson viewing a hot plate covered in black
+electrical tape (bare plate read ~10 C low from specular reflection — a real and
+well-caught result), 30x30-pixel centred ROI, TIFF sequences reduced frame-by-frame
+in Python. Two experiments: a distance sweep at 15/30/45 cm with the plate at 35 C,
+and a 1 C increment sweep from 35 to 40 C at 30 cm averaging 10 frames per step.
+
+**What I found on reducing those numbers** (written to
+`analysis/lab_tests/expt1_reported_stats.py` rather than done in chat, per the
+repo convention):
+
+- The distance sweep gives means of 34.52 / 35.17 / 34.79 C — a 0.65 C spread that
+  is *non-monotonic* in distance. That is an uncertainty floor, not a distance
+  term; the experiment as designed could not have detected one.
+- The increment sweep has bias −1.36 C and scatter 0.56 C rms, with measured steps
+  of +1.34, +0.21, +1.69, **−0.29**, +2.41 C. One step in five runs backwards, so a
+  1 C change is not resolvable step-by-step on these data. Critically, the commanded
+  temperature rose monotonically *in time*, which makes thermal drift completely
+  degenerate with a gain error — the ramp as run cannot separate them. This is the
+  single most important design flaw to fix in Round 2, and the fix is cheap:
+  randomise the setpoint order and return to a fixed anchor temperature between steps.
+- The quoted per-pixel noise (0.083 / 1.011 / 0.103 C) has a middle value 10x its
+  neighbours; I read it as a typo for 0.101. Taking ~0.1 C per pixel, the median of
+  a 30x30 ROI averages down below 0.01 C — which means **the ~1 C scatter is not
+  sensor noise at all**. It is target and scene systematics: emissivity of the tape,
+  reflected background, plate non-uniformity, FFC state, drift. Round 2 should be
+  built to attack those; re-measuring noise would be wasted bench time.
+
+**Assessment of the Day-2 plan.** As written it largely repeats Round 1 and appends
+a wind test, so my expectation is that it reproduces the same ~1 C floor. The
+binding gap is that there is still **no independent thermometer** anywhere in the
+experiment — the hot-plate dial is standing in for truth, and a dial reports the
+heater element rather than the tape surface. Until that is fixed, Round 2 measures
+repeatability, not accuracy. Two further gaps: nothing records the reflected
+background temperature (without which no emissivity correction is possible) or the
+camera gain state (a factor of 2 in the counts-to-Kelvin conversion); and neither
+round tests **water**, which is the actual target and differs from a hot plate in
+emissivity, angular dependence, cool-skin structure and surface motion. Viewing
+angle is likewise untested and is the lab result that feeds most directly into the
+flight plan, since water emissivity falls off sharply beyond ~40 degrees from nadir
+and therefore bounds the usable swath.
+
+**Deliverable status.** Per the prompt's instruction to discuss before writing,
+I created nothing in Drive. Instead I wrote 19 questions into the Lab work / Q&A
+section above, grouped as: the missing reference thermometer (A), emissivity and
+reflected background (B), design confounds — randomisation, settling time, gain
+logging (C), FFC behaviour, including scepticism of the reported "FFC every 16
+frames" (D), scope, i.e. adding water-bath and viewing-angle tests (E), and
+logistics — Drive format, audience, schedule, and a proposed
+`data/lab_tests/<date>/<run_id>/` layout (F). Each carries my recommendation so
+JXP can confirm or redirect quickly. I also supplied a priority order in case bench
+time is short: reference thermometer > water bath > randomised increments > viewing
+angle > wind > distance re-test. Awaiting answers before drafting the checklist.
