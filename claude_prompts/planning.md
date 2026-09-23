@@ -122,7 +122,7 @@ floor are still unmeasured. Questions:
    or Steve McGuire's lab)? That would replace the hot-plate + tape entirely.
    Is it worth a week's delay to borrow one?
 
->A. (1) [RW] ; (2) We do not have a proper calibrated blackbody.
+>A. (1) [RW] ; (2) We do not have a proper calibrated blackbody.  **IN PROGRESS, ASSUME NO FOR NOW (9/23/26 @ 12:02 PM)**
 
 **B. Emissivity and reflected background**
 
