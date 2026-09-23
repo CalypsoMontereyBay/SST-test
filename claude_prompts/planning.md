@@ -220,7 +220,7 @@ floor are still unmeasured. Questions:
     (a real evaporative effect on water, which is physics we want) or wind cooling
     the *camera housing* (an instrumental effect)? Those need different setups and
     the doc does not distinguish them.
->A. Both, flying at the B.S cruise speed of 18 m/s while the camera is attatched to the nose cone will introduce fast, moving air over the camera, which will certainly introduce a non-zero amount of cooling effect on, at the very least, the camera's body and lens.  We need to be able to understand what about, and how are our measurements change with both of these variables.  Further, if an anemometer is found, fan speed will be denoted. If not, qualitative is the way we will be denoting fan speed, we can also reference the fan model's docs if available to say "Speed Setting X" ≅ N mph.
+>A. Both, flying at the B.S cruise speed of 18 m/s while the camera is attatched to the nose cone will introduce fast, moving air over the camera, which will certainly introduce a non-zero amount of cooling effect on, at the very least, the camera's body and lens.  We need to be able to understand what about, and how are our measurements change with both of these variables. An anemometor will be available for the experiment to measure and set wind speed.
 
 **F. Logistics for the deliverable**
 
