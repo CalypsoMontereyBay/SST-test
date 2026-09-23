@@ -174,7 +174,8 @@ floor are still unmeasured. Questions:
    an FFC every 0.27 s, which I do not believe — I suspect that is the duplicate-frame
    pattern, not a shutter event. Can Rob/Christian confirm what was actually observed?
    The checklist's handling of FFC depends on the answer.
->A. [RW/CP]
+>A. [RW/CP] 
+-> CP: Can confirm that the boson camera does FFC. The duplicate pattern comes from the camera temporarily freezing itself while it undos the internal thermal drift. 
 
 10. The Day-2 checklist says "Set FFC interval -> one that doesnt mess up testing".
     Which do you want: FFC *disabled* during a recording (clean, but drift accrues),
@@ -182,6 +183,7 @@ floor are still unmeasured. Questions:
     *Recommendation: manual, logged. It is the only version where we can measure
     drift and correct for it rather than hoping it cancels.*
 >A. [RW/CP]
+-> CP: FFC that is manually triggered at a known time stamp. 
 
 11. Round 1 says "when the boson is not focusing on something ... everything will
     seem warmer" and that FFC removes drift when the object is out of focus. The
