@@ -80,6 +80,8 @@ Guidelines for the planning/design document, which will be named
 
 1. We are performing a series of in the lab tests on the Boson sensor in preparation for the flight tests.  There are 2 Google docs on "GDrive:Oceanography/Research/Calypso Monterey Bay/Sensors/SST/Lab Tests" describing: (i) our first set of tests and (ii) our planned second set of tests.  Please read both docs.  We are going to generate a detailed checklist for the 2nd set of tests as a separate doc in the Drive.  Discuss this with me before doing so; ask questions in the Q&A section below.  Use Opus 5. Log your work.
 
+2. We have answered your questions in the Q&A section below.  Please read those answers and see if you have any further questions.  If so, ask them in the Q&A section below.  Use Opus 5. Log your work.
+
 #### Q&A
 
 **Claude, 2026-09-23 — questions before drafting the Round-2 checklist.**
@@ -122,7 +124,7 @@ floor are still unmeasured. Questions:
    or Steve McGuire's lab)? That would replace the hot-plate + tape entirely.
    Is it worth a week's delay to borrow one?
 
->A. (1) [RW] ; (2) We do not have a proper calibrated blackbody.  **IN PROGRESS, ASSUME NO FOR NOW (9/23/26 @ 12:02 PM)**
+>A. (1) Yes, we will have a contact thermometer attached or use a thermal gun; (2) We do not have a proper calibrated blackbody. 
 
 **B. Emissivity and reflected background**
 
@@ -133,9 +135,7 @@ floor are still unmeasured. Questions:
    user emissivity setting, so that correction has to happen in our analysis
    instead. Is that your understanding too? Should the checklist record raw
    TLinear and apply emissivity in post, rather than trying to set it on the camera?
->A. [RW/CP]
-   -> RW: Should be verified by RW, but yes, if user-side emissivity settings don't exist in the gui, we must correct in post.
-      However, if they exist in the SDK, we should set it in camera using software for the real missions.
+>A.   Should be verified, but yes, if user-side emissivity settings don't exist in the gui, we must correct in post.  However, if they exist in the SDK, we should set it in camera using software for the real missions.
 
 4. To do that correction at all we need the **reflected background temperature**
    (the apparent temperature of whatever the target is reflecting — i.e. the room,
@@ -177,19 +177,14 @@ floor are still unmeasured. Questions:
    an FFC every 0.27 s, which I do not believe — I suspect that is the duplicate-frame
    pattern, not a shutter event. Can Rob/Christian confirm what was actually observed?
    The checklist's handling of FFC depends on the answer.
->A. [RW/CP] 
--> RW: Unless set to a manual mode by the user, the boson intelligently fires FFC as needed, which is called External Mode. Using the Boson's SDK and Manual Mode, we can sample the temperature sensor and trigger a FFC. In External Mode, the boson ignores the internal shutter and runs FFC on the scene. The observed video frame freeze is simple: video output is paused during FFC on the GUI app. 
+>A.  Unless set to a manual mode by the user, the boson intelligently fires FFC as needed, which is called External Mode. Using the Boson's SDK and Manual Mode, we can sample the temperature sensor and trigger a FFC. In External Mode, the boson ignores the internal shutter and runs FFC on the scene. The observed video frame freeze is simple: video output is paused during FFC on the GUI app. 
 
 10. The Day-2 checklist says "Set FFC interval -> one that doesnt mess up testing".
     Which do you want: FFC *disabled* during a recording (clean, but drift accrues),
     or FFC on a **manual** trigger at known timestamps we log and exclude in analysis?
     *Recommendation: manual, logged. It is the only version where we can measure
     drift and correct for it rather than hoping it cancels.*
->A. [RW/CP]
--> CP: FFC that is manually triggered at a known time stamp, we need to be able to manually trigger FFC during flight for optimal performance.
--> RW: Other tests we need to run also involve disabling FFC entirely, separate tests for different performance metrics of the camera.
-         For example, we will need to test how error increases with thermal drift across the entire operating temperature range of the camera, meaning FFC
-         must be disabled for such a test to be relevant.
+>A. FFC that is manually triggered at a known time stamp, we need to be able to manually trigger FFC during flight for optimal performance.  Other tests we need to run also involve disabling FFC entirely, separate tests for different performance metrics of the camera.  For example, we will need to test how error increases with thermal drift across the entire operating temperature range of the camera, meaning FFC must be disabled for such a test to be relevant.
 
 11. Round 1 says "when the boson is not focusing on something ... everything will
     seem warmer" and that FFC removes drift when the object is out of focus. The
@@ -225,12 +220,7 @@ floor are still unmeasured. Questions:
     (a real evaporative effect on water, which is physics we want) or wind cooling
     the *camera housing* (an instrumental effect)? Those need different setups and
     the doc does not distinguish them.
->A. [RW/CP]
-
--> RW: Both, flying at the B.S cruise speed of 18 m/s while the camera is attatched to the nose cone will introduce fast, moving air over the camera, which
-      will certainly introduce a non-zero amount of cooling effect on, at the very least, the camera's body and lens.
-      We need to be able to understand what about, and how are our measurements change with both of these variables.
-      Further, if an anemometer is found, fan speed will be denoted. If not, qualitative is the way we will be denoting fan speed, we can also reference the fan model's docs if available to say "Speed Setting X" ≅ N mph.
+>A. Both, flying at the B.S cruise speed of 18 m/s while the camera is attatched to the nose cone will introduce fast, moving air over the camera, which will certainly introduce a non-zero amount of cooling effect on, at the very least, the camera's body and lens.  We need to be able to understand what about, and how are our measurements change with both of these variables.  Further, if an anemometer is found, fan speed will be denoted. If not, qualitative is the way we will be denoting fan speed, we can also reference the fan model's docs if available to say "Speed Setting X" ≅ N mph.
 
 **F. Logistics for the deliverable**
 
