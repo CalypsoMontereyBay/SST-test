@@ -122,6 +122,8 @@ floor are still unmeasured. Questions:
    or Steve McGuire's lab)? That would replace the hot-plate + tape entirely.
    Is it worth a week's delay to borrow one?
 
+>A. (1) [RW] ; (2) We do not have a proper calibrated blackbody.  
+
 **B. Emissivity and reflected background**
 
 3. Round 1 found the bare plate read ~10 C low from specular reflection, fixed by
@@ -131,14 +133,17 @@ floor are still unmeasured. Questions:
    user emissivity setting, so that correction has to happen in our analysis
    instead. Is that your understanding too? Should the checklist record raw
    TLinear and apply emissivity in post, rather than trying to set it on the camera?
+>A. [RW/CP]
 4. To do that correction at all we need the **reflected background temperature**
    (the apparent temperature of whatever the target is reflecting — i.e. the room,
    or the person standing in front of it). Nothing currently records it. Shall I
    add a step: point the camera at a crumpled-foil diffuse reflector at the target
    position and log that reading at every setpoint?
+>A. Yes, add that
 5. The Day-2 checklist says "Check tape w/ heat gun". What is that step verifying?
    I want to write it down correctly, and if the intent is "confirm the tape and
    the plate are at the same temperature", there is a cleaner way to say it.
+>A. Yes, that is the intent
 
 **C. Confounds in the design**
 
@@ -147,6 +152,8 @@ floor are still unmeasured. Questions:
    degeneracy identified above. It costs maybe 40 extra minutes.
    *Recommendation: yes — without it Round 2's increment test is uninterpretable
    in the same way Round 1's was.*
+>A. Yes, do that
+
 7. Ten frames per step was flagged as too few in Round 1, and the Day-2 doc moves
    to 2-minute videos. At ~60 Hz that is ~7200 frames. Is 2 minutes per setpoint
    the right dwell, and — more important — how long do we wait after changing the
@@ -154,9 +161,12 @@ floor are still unmeasured. Questions:
    plate settling is my leading suspect for the Round-1 scatter.
    *Recommendation: 10 min settle, then 2 min record, and log the FPA temperature
    throughout with `fpatemp.py` so settling is visible rather than assumed.*
+>A. Yes, use your recommendedation
+
 8. **Gain state** (high vs low) is never recorded. It is a factor-of-2 in the
    counts-to-Kelvin conversion, so a mis-recorded gain is a catastrophic error,
    not a subtle one. I want it logged at the top of every run. Any objection?
+>A. No objection
 
 **D. FFC**
 
@@ -164,17 +174,23 @@ floor are still unmeasured. Questions:
    an FFC every 0.27 s, which I do not believe — I suspect that is the duplicate-frame
    pattern, not a shutter event. Can Rob/Christian confirm what was actually observed?
    The checklist's handling of FFC depends on the answer.
+>A. [RW/CP]
+
 10. The Day-2 checklist says "Set FFC interval -> one that doesnt mess up testing".
     Which do you want: FFC *disabled* during a recording (clean, but drift accrues),
     or FFC on a **manual** trigger at known timestamps we log and exclude in analysis?
     *Recommendation: manual, logged. It is the only version where we can measure
     drift and correct for it rather than hoping it cancels.*
+>A. [RW/CP]
+
 11. Round 1 says "when the boson is not focusing on something ... everything will
     seem warmer" and that FFC removes drift when the object is out of focus. The
     Boson is normally fixed-focus, so I think this is describing a scene-dependent
     (non-uniformity / narcissus) effect rather than autofocus. Do you want me to
     include a dedicated test to pin that down? It matters for the ocean, where the
     scene fills the frame uniformly and there is no "object" at all.
+
+>A. Yes, do that
 
 **E. Scope — the part I think is actually missing**
 
@@ -186,17 +202,22 @@ floor are still unmeasured. Questions:
     thermometer in the bulk and the camera viewing at a few incidence angles?
     *Recommendation: yes. This is the closest lab analogue to the actual measurement,
     and I would rather cut the distance re-test than skip it.*
+>A. No, let's save that for a Round 3 of tests.
+
 13. **Viewing angle** is untested and is the one lab result that flows straight into
     the flight plan: water emissivity falls off sharply beyond ~40 degrees from nadir,
     which bounds the usable swath. Can we mount the camera to view the target at,
     say, 0 / 20 / 40 / 60 degrees? *Recommendation: yes, second priority after the
     water bath.*
+>A. No, let's save that for a Round 3 of tests.
+
 14. The wind test: "Low / Medium / High" fan settings are not a measurable quantity.
     Do we have an anemometer? If not I will record fan setting + distance and label
     the result qualitative. Also — is the intent to test wind cooling the *target*
     (a real evaporative effect on water, which is physics we want) or wind cooling
     the *camera housing* (an instrumental effect)? Those need different setups and
     the doc does not distinguish them.
+>A. [RW/CP]
 
 **F. Logistics for the deliverable**
 
@@ -205,18 +226,26 @@ floor are still unmeasured. Questions:
     Google Doc I create in that folder, (b) a `.docx` matching the existing pattern,
     or (c) a Markdown file in this repo that gets mirrored to Drive? I lean (a) for
     editability in the field, with a copy committed here as the version of record.
+>A. (a).  Call it "Detailed Plan for Round 2 of Boson SST Tests" and put it in the "GDrive:Oceanography/Research/Calypso Monterey Bay/Sensors/SST/Lab Tests" folder.
+
 16. **Audience and voice**: is this a checklist Rob and Christian execute
     unsupervised, bench-side? If so I will write it as strict numbered steps with
     explicit fill-in blanks and pass/fail criteria, not prose — and include a
     one-page data-recording sheet.
+>A. Yes, and JXP will be with them too.
+
 17. **Do you want the "why" in it?** A checklist that explains why each step exists
     is longer but survives contact with a student who hits something unexpected.
     *Recommendation: yes, as short bracketed notes.*
+>A. Yes
+
 18. **Schedule and effort**: the Undergrad Team notes point at the week of
     2026-10-26 or shortly after. Everything above is roughly a full day of bench
     time, maybe two. If that is too much, tell me and I will cut — my priority
     order would be: reference thermometer > water bath > randomised increments >
     viewing angle > wind > distance re-test.
+>A. We are planning to do this in a few hours on 2026-09-24.  Is that enough (without the Round 3 tests)?
+
 19. **Where does the raw data go?** Nothing in either doc says. Proposed convention:
     `data/lab_tests/2026-MM-DD/<run_id>/` with the TIFF sequence, the `fpatemp.py`
     CSV, and a `run.yaml` of the metadata the checklist collects — so
@@ -224,6 +253,8 @@ floor are still unmeasured. Questions:
     Does that fit how you want the repo organised?
 
 I have not created anything in Drive yet, per the instruction to discuss first.
+
+>A. The data should be in the `Lab Tests` folder.
 
 
 ### Sensor
