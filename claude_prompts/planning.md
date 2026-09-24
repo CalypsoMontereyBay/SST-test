@@ -259,6 +259,224 @@ I have not created anything in Drive yet, per the instruction to discuss first.
 
 >A. The data should be in the `Lab Tests` folder.
 
+---
+
+**Claude, 2026-09-23 (round 2) — follow-ups after reading your answers.**
+
+Thank you — those resolve most of it. Round 3 taking the water bath and the
+viewing-angle sweep is the right call, and it makes the day tractable. Five
+things changed enough to need another pass, and I have put the schedule
+arithmetic in `analysis/lab_tests/round2_time_budget.py` so the numbers below
+are reproducible rather than asserted.
+
+**G. Answering your question in Q18 — will it fit in a few hours?**
+
+20. **Not as currently specified: I get ~5.0 hours.** The budget breaks down as
+    45 min setup + 50 min drift test + 132 min increment sweep + 20 min distance
+    + 22 min wind + 30 min teardown/offload. The increment sweep dominates
+    because 6 setpoints plus 5 anchor returns at a 10-min settle is 11 dwells.
+    Three levers bring it down, and the first is free:
+    - **A contact probe collapses the settle time.** With a probe on the target
+      surface we no longer wait for the plate to *reach* the dial value — we wait
+      only until the surface is *stable* (say <0.1 C drift over 60 s), and we
+      record the probe reading as truth whatever it says. That alone takes the
+      sweep from 132 to 55 min and the day from 5.0 to **3.7 h**.
+    - Anchoring only at the start and end rather than between every step, and
+      dropping the distance re-test (see Q25): **3.1 h**.
+    - Deferring the FFC-disabled drift test to its own session: **2.3 h**.
+
+    My recommendation is the **3.1 h version** — it keeps everything that is
+    diagnostic and drops only the re-test I think is confounded anyway. But 3.1 h
+    of *bench* time with no slack, on a rig being assembled for the first time in
+    this configuration, realistically means a half day. Is that what "a few hours"
+    means, or do we need the 2.3 h version? If it is the latter, I would move the
+    drift test rather than cut the anchors.
+>A. Agreed, let's do the 3.1 h version.
+
+21. Your Q10 answer **added scope** I had not budgeted: the FFC-disabled
+    thermal-drift test. It is worth doing, but it carries a sequencing constraint
+    that shapes the whole day — see Q24.
+>A. ok
+
+**H. The reference thermometer — one concern with your Q1 answer**
+
+22. You said "a contact thermometer attached **or use a thermal gun**". These are
+    not interchangeable, and I want to flag it before tomorrow. A thermal (IR)
+    gun is *another radiometer*, looking at the same surface with the same unknown
+    emissivity, typically spec'd at ±2 C. Calibrating the Boson against it is
+    circular: a shared emissivity error cancels out of the comparison and we would
+    conclude the Boson is fine when it is not. The contact probe is the only
+    option here that is genuinely independent. **Can a K-type thermocouple and
+    reader be sourced today?** They are ~$25 and often already in a lab drawer —
+    worth asking BELS or Steve McGuire's group this afternoon. If it truly cannot
+    be found by tomorrow, I will write the checklist with the gun as a
+    *cross-check* rather than a reference, and label every accuracy number in the
+    output as uncalibrated. I would rather say that up front than discover it in
+    the analysis.
+>A. Ok, we will find a contact probe.
+
+23. Minor, but it affects one checklist line: a probe taped *under* the black tape
+    reads the plate/tape interface, not the radiating surface. At 35–40 C the
+    gradient is small, but do you want the probe under the tape (protected, reads
+    slightly hot) or on top at the frame edge just outside the ROI (reads the true
+    radiating surface, but is itself in the image)? *Recommendation: on top, just
+    outside the ROI — and it doubles as a visible landmark in the frame.*
+>A. I think we are going to remove the tape.  Do you agree?
+
+**I. FFC mode — I want to check one thing in your Q9 answer**
+
+24. Your description of External mode matches mine, with one consequence worth
+    stating: because External mode computes the correction **from the scene**, any
+    structure in that scene gets burned into the flat field. Over open ocean the
+    scene really is near-uniform, so External is a sensible *flight* strategy. On
+    the bench, pointed at a hot plate against a structured room, it would inject
+    exactly the artefact we are trying to measure. So for the lab I want
+    **Manual mode with the internal shutter** (a genuinely uniform reference),
+    triggered at logged timestamps. Agreed? This is a one-line change but it
+    changes what every run means.
+>A. Agreed, let's do the Manual mode with the internal shutter.
+
+25. **Sequencing constraint.** The drift test needs the camera to start *cold*, and
+    once it is warm a cold start cannot be recovered in a session. Every other test
+    wants the opposite — a thermally settled camera. So the drift test must run
+    **first, from power-on**, which means the Boson should arrive unpowered and
+    stay unplugged through rig assembly. Can you make sure it is not left running
+    during setup? It is the easiest way to lose the test.
+>A. Yes, add this to our checklist and plan
+
+26. Also on the drift test: you wrote "across the entire operating temperature
+    range of the camera". That range is roughly −40 to +80 C ambient and needs an
+    environmental chamber — not achievable on a bench tomorrow. What *is*
+    achievable, and I think is what you want, is the **warm-up transient**: FFC
+    disabled, camera cold, staring at a stable target while the FPA climbs to
+    equilibrium (typically 10–20 C above ambient over ~30–45 min), with
+    `fpatemp.py` logging throughout. That gives us drift-vs-FPA-temperature over
+    the range the camera will actually self-generate. Confirm that is the intent?
+>A. We confirm
+
+**J. Two design problems I found while writing this up**
+
+27. **The distance test and the scene-fill test are the same test.** Moving the
+    camera from 15 to 45 cm changes the stand-off *and* the fraction of the frame
+    the hot plate fills. So Round 1's "distance" result was never a clean distance
+    measurement — it is entangled with exactly the scene-fill effect you asked me
+    to pin down in Q11. Two ways out: hold the fill fraction constant while varying
+    distance (scale the target), or hold distance constant and vary the surround
+    (mask the plate down, or change what is around it). *Recommendation: drop the
+    distance re-test as such, and run Q11's scene-fill test properly at fixed
+    distance — it answers the question that actually matters for the ocean, where
+    the scene fills the frame uniformly and there is no "object" at all.* Do you
+    agree, or do you want distance kept for continuity with Round 1?
+>A. Ok, use your recommendation.
+
+28. **The wind test needs the contact probe to be interpretable at all.** Blowing
+    room-temperature air at a 35 C plate will cool *the plate*, possibly by several
+    degrees. Without a probe on the target we cannot tell target cooling from
+    camera cooling — the two effects you said in Q14 you want to separate. With a
+    probe we can: the probe gives the target's true temperature, so any residual
+    discrepancy is instrumental. Proposed four configs rather than the full grid:
+    fan on **camera only** (target shielded) at low/med/high, plus fan on **target
+    only** (camera shielded) at high as a check. Reasonable?
+>A. Yes, this is reasonable.
+
+29. Related: a household fan moves perhaps 2–5 m/s, against the BlackSwift's 18 m/s
+    cruise. So this test establishes the **sign and rough scaling** of the effect,
+    not its flight magnitude, and I will label it that way. Is there a stronger
+    airflow source available (shop blower, ducted fan)? If not, we extrapolate and
+    say so.
+>A. Agreed
+
+**K. Data volume — this one is urgent and nobody has costed it**
+
+30. Your Q19 answer puts the data in the Drive `Lab Tests` folder. At Boson 640 and
+    60 Hz, a single 2-minute capture of 16-bit TIFFs is **4.7 GB**, and a full day
+    of ~15 runs is **~71 GB**. That will not fit in a Drive folder in any practical
+    sense, and the upload would outlast the experiment. Options, in my order of
+    preference: capture at a **reduced frame rate** (thermal drift is slow — 2 Hz
+    keeps everything we need at ~1/30 the volume, 0.16 GB/run), or capture fast and
+    **decimate on the bench** before anything leaves the laptop. Which do you want?
+    This has to be decided *before* the session.
+>A. 70Gb is fine
+
+31. To size that properly I need two facts I do not have: **is this a Boson 640 or
+    320, and is it the 60 Hz or the 9 Hz variant?** The table in
+    `round2_time_budget.py` spans 0.18 to 4.72 GB per run across those four cases —
+    a 26x range, so it is not a detail.
+>A [RW]
+
+32. Given the above, my proposal for Q19: **reduced products and metadata to Drive**
+    (per-run CSVs, the `fpatemp.py` logs, the recording sheet, a few sample frames),
+    **raw TIFFs to an external SSD or the lab machine**, with the Drive folder
+    holding an index of what lives where. Does that work, or do you specifically
+    want raw frames in Drive?
+>A. Again, 70Gb is no problem
+
+**L. Two loose ends**
+
+33. On Q3 — for the *real missions* you suggested setting emissivity in-camera via
+    the SDK. I would push back gently: baking an emissivity correction into the
+    recorded data is irreversible, and if we later revise our value for water's
+    emissivity (likely, given the angular dependence we will measure in Round 3)
+    the archived data cannot be recovered. *Recommendation: always record raw
+    TLinear and apply emissivity in post, in-camera setting used only for the live
+    display.* Also — who is verifying whether the SDK exposes emissivity at all
+    before tomorrow? That is a 10-minute desk check, not a bench task, and the
+    checklist wording depends on it.
+>A. Ok, and add to the checklist and plan
+
+34. Practical: is there a confirmed **Windows machine with the Boson GUI/SDK
+    working** for tomorrow? Round 1 needed a borrowed BELS laptop, and "make sure
+    usb is talking to VM" appears in the Round-1 scratch notes as a live problem.
+    If that is still unsettled I will put it at the top of the checklist as a
+    blocking pre-flight item with a fallback.
+>A. Confirmed
+
+Still nothing created in Drive — I will draft "Detailed Plan for Round 2 of Boson
+SST Tests" in the Lab Tests folder once these are settled. The ones that genuinely
+block drafting are **Q20** (which scenario), **Q22** (probe or not), **Q30/31**
+(capture rate and camera variant); the rest I can write around with a stated
+assumption if you would rather I just go.
+
+**Claude, 2026-09-23 (reconciliation) — after merging Rob's refinements to Q2, Q10 and Q14.**
+
+Rob revised three answers while I was drafting the follow-ups above. They merge
+cleanly with my additions (no textual conflict), but two of them partly overtake
+questions I had already asked, so I am marking those rather than leaving you to
+answer something already settled.
+
+- **Q29 is largely answered — an anemometer was found.** That is a real upgrade:
+  the wind test now produces a calibrated trend against *measured* m/s instead of
+  "low / medium / high", which is the difference between a result we can cite and
+  an anecdote. What it does **not** do is extend the range — an anemometer measures
+  the fan, it does not make the fan faster. A household fan tops out around 2–5 m/s
+  against the S2's 18 m/s cruise, so we will still be extrapolating roughly 4–9x
+  beyond our measured span. The remaining question is narrower than Q29 as written:
+  **what is the fan's top speed measured at the camera position?** Please have
+  someone take that one reading early, because it sets how honest the extrapolation
+  can be — and if it comes in near 5 m/s, it is worth a sentence in the write-up
+  saying so explicitly rather than implying flight-relevant coverage.
+- **Q24 is revised, not withdrawn.** Rob's point that External-mode behaviour
+  "should potentially inform future tests" is right, and it is compatible with my
+  recommendation once the two uses are separated. External mode computes its flat
+  field *from the scene*, so running it during a science capture injects exactly
+  the artefact we are trying to measure — but characterising it deliberately, in
+  its own block, is valuable and is the only way we learn whether it is safe to
+  rely on in flight. **Proposal: Manual + internal shutter for all measurement
+  runs, plus a dedicated ~15-minute External-mode block.** I have added that to
+  `round2_time_budget.py` as scenario C+, which comes to **3.4 h** (vs 3.1 h for C).
+  Agreed?
+- **Q2's refinement ("or a blackbody at all") changes nothing in my list, but it
+  raises the stakes on Q22.** With no blackbody anywhere on campus, the contact
+  probe is not merely the better reference — it is the *only* independent reference
+  we will have tomorrow. If it cannot be sourced today, Round 2 has no absolute
+  calibration at all and every accuracy number must be reported as relative.
+
+So the still-open blockers are unchanged in substance: **Q20** (which scenario —
+now C or C+), **Q22** (probe sourced today, yes or no), and **Q30/Q31** (capture
+rate and Boson variant).
+
+
+
 
 ### Sensor
 
@@ -441,3 +659,115 @@ logistics — Drive format, audience, schedule, and a proposed
 JXP can confirm or redirect quickly. I also supplied a priority order in case bench
 time is short: reference thermometer > water bath > randomised increments > viewing
 angle > wind > distance re-test. Awaiting answers before drafting the checklist.
+
+### 2026-09-23 (Lab work #2: read JXP's Q&A answers; posed follow-up questions and a schedule/data budget)
+
+Executed the 2nd task under "Prompts / Lab work". Read JXP's answers to all 19
+questions and worked through their consequences. Most are settled: Round 3 will
+take the water bath and the viewing-angle sweep (Q12/Q13), randomised setpoints
+with anchor returns are approved (Q6), 10-min settle + 2-min record with
+`fpatemp.py` logging is approved (Q7), gain state will be logged (Q8), the
+reflected-background foil step is in (Q4), manual logged FFC is confirmed (Q10),
+and the deliverable is a native Google Doc named "Detailed Plan for Round 2 of
+Boson SST Tests" in the Lab Tests folder, written as bench-side numbered steps
+for Rob and Christian with JXP present, with short bracketed rationale (Q15–Q17).
+
+**The direct question in Q18 — does it fit in a few hours on 2026-09-24?**
+I costed it in `analysis/lab_tests/round2_time_budget.py` rather than guessing.
+As specified it is **~5.0 h**, not a few hours. The increment sweep dominates at
+132 min, because 6 setpoints plus 5 anchor returns at a 10-min settle is 11
+dwells. The key realisation is that **the contact probe removes the need for a
+long settle at all**: with truth read off the probe we stop waiting for the plate
+to reach the dial value and wait only until the surface is stable, which takes the
+day to 3.7 h; dropping to bracketing anchors and cutting the distance re-test
+gives 3.1 h; deferring the drift test gives 2.3 h. I recommended the 3.1 h version
+while noting that 3.1 h of bench time on a first-time rig realistically means a
+half day. JXP's own Q10 answer also added unbudgeted scope — the FFC-disabled
+drift test — which is worth doing but carries a sequencing constraint.
+
+**Five substantive issues raised as follow-ups Q20–Q34:**
+
+- **The thermal gun is not a reference (Q22).** JXP's Q1 answer offered "contact
+  thermometer *or* thermal gun" as equivalent. They are not: an IR gun is another
+  radiometer viewing the same surface with the same unknown emissivity, so a
+  shared emissivity error cancels out of the comparison and we would wrongly
+  conclude the Boson is accurate. Only the contact probe is independent. Since the
+  test is tomorrow, I flagged sourcing a K-type thermocouple as urgent and
+  same-day, with a fallback of labelling all accuracy numbers uncalibrated.
+- **Distance and scene-fill are the same test (Q27).** Moving the camera changes
+  stand-off *and* the fraction of frame the plate fills, so Round 1's distance
+  result was always entangled with the scene-fill effect JXP asked me to isolate
+  in Q11. Recommended dropping the distance re-test and running the scene-fill
+  test properly at fixed distance, varying the surround — which is the version
+  that bears on the ocean, where the scene is uniform and there is no "object".
+- **The wind test is uninterpretable without the probe (Q28).** Room-temperature
+  air on a 35 C plate cools the plate; without target truth we cannot separate
+  target cooling from camera cooling, which is exactly the separation JXP asked
+  for in Q14. Proposed four shielded configs instead of the full grid, and noted
+  that a household fan at 2–5 m/s against an 18 m/s cruise gives sign and scaling
+  only, not flight magnitude.
+- **Data volume is unbudgeted and large (Q30–Q32).** Q19's answer puts data in the
+  Drive folder, but at Boson 640/60 Hz one 2-minute TIFF capture is 4.7 GB and a
+  day is ~71 GB — impractical for Drive, and the upload would outlast the session.
+  Since drift is a slow signal, 2 Hz preserves everything at ~1/30 the volume.
+  Proposed reduced products plus metadata to Drive and raw to external storage.
+  I also asked which Boson variant this is: across 640/320 and 60/9 Hz the per-run
+  volume spans 0.18–4.72 GB, a 26x range, so capture rate must be set beforehand.
+- **FFC mode for the bench (Q24–Q26).** JXP's account of External mode matches
+  mine, but because External computes the correction *from the scene*, structure in
+  a bench scene gets burned into the flat field — sensible in flight over uniform
+  ocean, harmful in a lab. Recommended Manual mode with the internal shutter for
+  Round 2. Separately, the drift test needs a **cold** camera and every other test
+  wants a warm one, so it must run first from power-on with the Boson unplugged
+  during setup. I also noted that "entire operating temperature range" (−40 to
+  +80 C) needs an environmental chamber and reinterpreted the test as the warm-up
+  transient, asking JXP to confirm.
+
+Also pushed back gently on setting emissivity in-camera for real missions (Q33):
+baking it in is irreversible, and our value for water's emissivity is likely to be
+revised after Round 3's angular measurements — so raw TLinear should always be the
+archived product. Asked who verifies the SDK's emissivity capability before
+tomorrow, and whether a Windows machine with a working GUI/SDK is confirmed (Q34),
+since Round 1's scratch notes show USB/VM connectivity was an unresolved problem.
+
+Created nothing in Drive, per the task's scope. Flagged that only Q20, Q22 and
+Q30/Q31 genuinely block drafting; the rest I can write around under stated
+assumptions if JXP prefers speed.
+
+### 2026-09-23 (Merged Rob's Q&A refinements; reconciled two of my follow-ups)
+
+JXP reported "conflicts" in `planning.md` after Rob pushed work. There were none
+in the git sense: the local branch was simply 5 commits behind
+`origin/thermal-testing` with my uncommitted follow-up edits on top, and nothing
+had been merged yet. I verified this by replaying the merge on scratch copies with
+`git merge-file` (base = HEAD, ours = working tree, theirs = origin) — it returned
+exit 0, zero conflict hunks, with all three of Rob's refinements and both of my
+additions present in the result. Rob touched only three lines, all inside the
+original Q&A block; my edits append a follow-up section and a log entry further
+down, so the two never overlap textually. Per the repo convention I ran no
+state-changing git commands and left the pull to JXP, recommending
+`git stash` → `git pull` → `git stash pop` as the path I had actually verified.
+
+The genuine conflict was semantic. Rob's refinements partly overtook two questions
+I had already posed, and answering them as written would have wasted JXP's time:
+
+- **Q14 → an anemometer was found**, which largely answers my Q29. This upgrades
+  the wind test from "low/medium/high" to a calibrated trend against measured m/s.
+  But an anemometer measures the fan rather than speeding it up, so the ~2–5 m/s
+  household-fan span against an 18 m/s cruise still leaves a 4–9x extrapolation.
+  I narrowed Q29 to the one reading that now matters: the fan's top speed at the
+  camera position, taken early, since it bounds how honest the extrapolation can be.
+- **Q10 → Rob wants External-mode behaviour characterised**, which pushes against
+  my Q24 recommendation of Manual mode on the bench. These reconcile once the uses
+  are separated: External computes its flat field *from the scene*, so it must not
+  run during a science capture, but characterising it deliberately in its own block
+  is the only way to learn whether it can be trusted in flight. Revised Q24 to
+  propose Manual for all measurement runs plus a dedicated ~15-min External block,
+  and added that to `round2_time_budget.py` as scenario **C+ = 3.4 h** (vs C = 3.1 h).
+- **Q2 → "or a blackbody at all"** changes no question but raises the stakes on
+  Q22: with none available on campus, the contact probe is the only independent
+  reference we will have, so failing to source one tomorrow means Round 2 carries
+  no absolute calibration.
+
+Open blockers unchanged in substance: Q20 (scenario C or C+), Q22 (probe sourced
+today), Q30/Q31 (capture rate and Boson variant).
