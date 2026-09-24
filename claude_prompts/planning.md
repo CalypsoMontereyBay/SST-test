@@ -124,7 +124,7 @@ floor are still unmeasured. Questions:
    or Steve McGuire's lab)? That would replace the hot-plate + tape entirely.
    Is it worth a week's delay to borrow one?
 
->A. (1) Yes, we will have a contact thermometer attached or use a thermal gun; (2) We do not have a proper calibrated blackbody. 
+>A. (1) Yes, we will have a contact thermometer attached or use a thermal gun; (2) We do not have a proper calibrated blackbody, or a blackbody at all. 
 
 **B. Emissivity and reflected background**
 
@@ -184,7 +184,7 @@ floor are still unmeasured. Questions:
     or FFC on a **manual** trigger at known timestamps we log and exclude in analysis?
     *Recommendation: manual, logged. It is the only version where we can measure
     drift and correct for it rather than hoping it cancels.*
->A. FFC that is manually triggered at a known time stamp, we need to be able to manually trigger FFC during flight for optimal performance.  Other tests we need to run also involve disabling FFC entirely, separate tests for different performance metrics of the camera.  For example, we will need to test how error increases with thermal drift across the entire operating temperature range of the camera, meaning FFC must be disabled for such a test to be relevant.
+>A. FFC that is manually triggered at a known time stamp, we need to be able to manually trigger FFC during flight for optimal performance.  Other tests we need to run also involve disabling FFC entirely, separate tests for different performance metrics of the camera.  For example, we will need to test how error increases with thermal drift across the entire operating temperature range of the camera, meaning FFC must be disabled for such a test to be relevant. Knowing how External Mode works should potenially inform future tests.
 
 11. Round 1 says "when the boson is not focusing on something ... everything will
     seem warmer" and that FFC removes drift when the object is out of focus. The
@@ -220,7 +220,7 @@ floor are still unmeasured. Questions:
     (a real evaporative effect on water, which is physics we want) or wind cooling
     the *camera housing* (an instrumental effect)? Those need different setups and
     the doc does not distinguish them.
->A. Both, flying at the B.S cruise speed of 18 m/s while the camera is attatched to the nose cone will introduce fast, moving air over the camera, which will certainly introduce a non-zero amount of cooling effect on, at the very least, the camera's body and lens.  We need to be able to understand what about, and how are our measurements change with both of these variables.  Further, if an anemometer is found, fan speed will be denoted. If not, qualitative is the way we will be denoting fan speed, we can also reference the fan model's docs if available to say "Speed Setting X" ≅ N mph.
+>A. Both, flying at the BlackSwift S2 cruise speed of 18 m/s while the camera is attatched to the nose cone will introduce fast, moving air over the camera, before ever accounting for wind direction and speed. This will certainly introduce a non-zero amount of cooling effect on, at the very least, the camera's body and lens. We need to be able to understand what about, and how are our measurements change with both of these variables. An anemometor will be available for the experiment to measure and set wind speed.
 
 **F. Logistics for the deliverable**
 
