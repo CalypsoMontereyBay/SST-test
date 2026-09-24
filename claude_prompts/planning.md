@@ -78,9 +78,13 @@ Guidelines for the planning/design document, which will be named
 
 ### Lab work
 
-1. We are performing a series of in the lab tests on the Boson sensor in preparation for the flight tests.  There are 2 Google docs on "GDrive:Oceanography/Research/Calypso Monterey Bay/Sensors/SST/Lab Tests" describing: (i) our first set of tests and (ii) our planned second set of tests.  Please read both docs.  We are going to generate a detailed checklist for the 2nd set of tests as a separate doc in the Drive.  Discuss this with me before doing so; ask questions in the Q&A section below.  Use Opus 5. Log your work.
+1. We are performing a series of in the lab tests on the Boson sensor in preparation for the flight tests.  There are 2 Google docs on `GDrive:Oceanography/Research/Calypso Monterey Bay/Sensors/SST/Lab Tests` describing: (i) our first set of tests and (ii) our planned second set of tests.  Please read both docs.  We are going to generate a detailed checklist for the 2nd set of tests as a separate doc in the Drive.  Discuss this with me before doing so; ask questions in the Q&A section below.  Use Opus 5. Log your work.
 
 2. We have answered your questions in the Q&A section below.  Please read those answers and see if you have any further questions.  If so, ask them in the Q&A section below.  Use Opus 5. Log your work.
+
+3. We have answered your next round of questions in the Q&A section below.  Please read those answers and see if you have any further questions.  If so, ask them in the Q&A section below.  Use Opus 5. Log your work.
+
+4. We have answered your next round of questions in the Q&A section below.  Please read those answers and then proceed to write the checklist. Put it in `GDrive:Oceanography/Research/Calypso Monterey Bay/Sensors/SST/Lab Tests/Boson Experiment 2 Checklist.docx`.  Use Opus 5. Log your work.
 
 #### Q&A
 
@@ -475,6 +479,130 @@ So the still-open blockers are unchanged in substance: **Q20** (which scenario �
 now C or C+), **Q22** (probe sourced today, yes or no), and **Q30/Q31** (capture
 rate and Boson variant).
 
+---
+
+**Claude, 2026-09-24 (round 3) — after your answers to Q20–Q34. Test day is today.**
+
+Most of this is now settled and I can draft. Six things left, and the first is a
+genuine disagreement rather than a question — I have costed it in
+`analysis/lab_tests/emissivity_tape_check.py` (integrated Planck over the Boson's
+7.5–13.5 µm band, not a grey-body approximation).
+
+**M. Q23 — no, I do not agree about removing the tape. This one I would push back on.**
+
+35. Removing the tape reintroduces precisely the failure Round 1 diagnosed and
+    fixed, and it does so in a way a contact probe cannot repair. A thermal camera
+    measures radiance, so a low-emissivity plate is largely a *mirror for the room*:
+
+    | surface | ε | reads (35 C plate, 22 C room) | a real 1.00 C step moves the reading |
+    |---|---|---|---|
+    | bare / lightly oxidised metal | 0.22 | 24.7 C | **0.24 C** |
+    | ceramic hotplate top | 0.90 | 33.8 C | 0.91 C |
+    | black tape (Round 1) | 0.95 | 34.4 C | 0.96 C |
+
+    Two separate problems, and the second is the one that kills it:
+    - **Bias.** The reading sits ~10 C low. A probe *can* correct this.
+    - **Sensitivity.** Only the fraction ε of a real temperature change ever
+      reaches the detector. Bare, a 1 C step in the plate arrives as ~0.24 C —
+      a **4x loss of signal**. No probe recovers signal that never arrived.
+
+    Round 2's central question is whether the Boson resolves 1 C steps, and Round 1
+    already measured 0.56 C rms scatter on exactly that test. Shrinking the signal
+    4x puts a 1 C step at roughly the noise floor, so the experiment would be
+    unable to answer its own question. A bare plate also makes the reading track
+    the *room*, so anyone walking past the rig changes the result — which is the
+    10 C artefact Round 1 spent an afternoon chasing.
+
+    Worth noting as a consistency check: inverting Round 1's own "reads 10 C lower"
+    observation gives ε ≈ 0.22 for the bare plate. An independent radiative model
+    and your bench observation land in the same place, which is good evidence the
+    tape was doing exactly what we think it was.
+
+    **Recommendation: keep the tape.** If the motive was my Q23 probe-placement
+    question, that is a much smaller problem and the answer is simply to run the
+    probe lead out under the tape edge and tape over it — the probe reads the
+    underside of the tape, which at 35–40 C is within ~0.1 C of the radiating face.
+    If the motive was something else (tape lifting when hot, outgassing, wanting a
+    surface closer to water's ε), tell me and I will solve *that* — high-emissivity
+    paint or a matte-black anodised plate at ε ≈ 0.97 would be better than tape.
+    But bare metal is the one option that makes the day's measurement impossible.
+    **Please confirm before setup — this is the single highest-consequence choice
+    left, and it is cheap to get right.**
+
+>A. Ok, keep the tape
+
+**N. One genuinely open item from the reconciliation note**
+
+36. You approved the **3.1 h version (scenario C)** in Q20, which does *not* include
+    the External-mode block — but that note was written before Rob asked for
+    External-mode behaviour to be characterised, and Q24 only settled that
+    measurement runs use Manual. So: do you want **C (3.1 h)** or **C+ (3.4 h)**,
+    the latter adding a dedicated ~15-min External-mode block kept strictly
+    separate from the science runs? *Recommendation: C+. It is 15 minutes, it
+    answers Rob's question, and it is the only way we learn whether External is
+    safe to rely on in flight.* If the day runs late, it is also the easiest single
+    block to drop on the spot — I will place it last in the checklist for exactly
+    that reason.
+>A. 3.4 hr is fine
+
+**O. A contradiction in the Round-1 notes I need resolved before writing the ROI step**
+
+37. The Day-2 doc says both "taking the temperature from a 30x30 square in the
+    centre of the frame" **and** "take the median of 115 pixels". Those disagree:
+    30×30 is 900 pixels. Which is right? It matters because noise averages down as
+    √N — 900 px buys 30x, 115 px buys 11x — and on a 640×512 frame a 30×30 ROI is
+    only 0.27% of the image, so we should also be sure it is large enough to cover
+    a genuinely uniform patch of the plate. *Recommendation: 30×30 = 900 px, median,
+    and record the ROI corner coordinates in the run metadata so it is reproducible
+    rather than "the middle".*
+>A. 30x30 is right
+
+**P. Accepting your 70 GB decision, with two costs attached**
+
+38. You said twice that 70 GB is fine, so that is settled and I will write the
+    checklist for full-rate capture. Two consequences I want on the record rather
+    than discovered at 5pm:
+    - **The upload does not fit in teardown.** 71 GB is 6.3 h at 25 Mbps, 3.1 h at
+      50, 1.6 h at 100. My 30-min teardown budget assumed reduced products. So:
+      push the small stuff first (CSVs, `fpatemp.py` logs, recording sheet, a few
+      sample frames), start the bulk upload asynchronously, and let it finish
+      overnight. Analysis is then never blocked on the transfer. Agreed?
+    - **Sustained write rate is 39 MB/s**, and ~15 runs need >100 GB free. I will
+      add two pre-flight steps: verify free disk space, and do a 30-second trial
+      capture with a frame count before the first science run. Silently dropped
+      frames would corrupt run timing without any visible error, and we would not
+      find out until analysis.
+>A. We will figure out how best to transfer the data
+
+39. Does the capture machine have >100 GB free, and is there an external SSD on
+    hand as a fallback? This is the kind of thing that stops a session dead at
+    run 8, and it takes two minutes to check this morning.
+>A. We will deal with the storage, but do highlight this in the checklist
+
+**Q. Logistics for today**
+
+40. **The Google Drive connector dropped out of this session**, so I cannot create
+    "Detailed Plan for Round 2 of Boson SST Tests" in the Lab Tests folder right
+    now. Options: (a) I draft it as Markdown in this repo and you paste or upload
+    it to Drive — fastest, and given the test is today I would default to this;
+    (b) you reconnect the Drive connector and I create the doc natively as agreed
+    in Q15. Which do you want? If you do not reply I will write the Markdown so
+    there is something usable at the bench either way.
+>A. I am back online
+
+41. Q33 is agreed but nobody is named: the **SDK emissivity desk-check** (does the
+    Boson SDK expose a scene-emissivity setting at all?) is a ~10-minute job and
+    the checklist wording depends on it. I will write it in as a pre-flight step
+    with both branches covered, but if someone can settle it before setup the doc
+    gets simpler.
+>A. Sounds good
+
+Of these, only **Q35 (the tape)** is genuinely blocking — it changes the physical
+setup and must be decided before the rig is built. Q36, Q37 and Q40 I can write
+around with a stated assumption (C+, 30×30, Markdown) and mark clearly in the doc
+for you to override.
+
+
 
 
 
@@ -771,3 +899,125 @@ I had already posed, and answering them as written would have wasted JXP's time:
 
 Open blockers unchanged in substance: Q20 (scenario C or C+), Q22 (probe sourced
 today), Q30/Q31 (capture rate and Boson variant).
+
+### 2026-09-24 (Lab work #3: read answers to Q20-Q34; pushed back on removing the tape)
+
+Executed the 3rd task under "Prompts / Lab work" on the morning of the test itself.
+Most of the plan is now settled: scenario C at 3.1 h (Q20), a contact probe will be
+found (Q22), Manual FFC with the internal shutter for all measurement runs (Q24),
+the drift test runs first from a cold camera (Q25) and is scoped to the warm-up
+transient rather than the full -40/+80 C range (Q26), the distance re-test is
+dropped in favour of a proper scene-fill test at fixed distance (Q27), the wind
+test uses four shielded configs (Q28) with no stronger fan available (Q29), the
+camera is a Boson R 640x512 60 Hz variant (Q31), and the Windows GUI/SDK machine is
+confirmed (Q34). Raised six remaining items as Q35-Q41.
+
+**The substantive one: JXP proposed removing the black tape from the hot plate
+(Q23) and asked whether I agreed. I do not, and said so with numbers.** Wrote
+`analysis/lab_tests/emissivity_tape_check.py`, which integrates Planck over the
+Boson's 7.5-13.5 um band (rather than assuming a grey-body power law) and solves
+for the apparent temperature of a target of emissivity eps viewed against a 22 C
+room. Two distinct failures follow from a bare plate, and the second is decisive:
+
+- **Bias**: at eps ~ 0.22 the plate reads ~10 C low. A contact probe *can* correct
+  this, so on its own it would not be fatal.
+- **Sensitivity**: only the fraction eps of a real temperature change reaches the
+  detector at all. Bare, a 1.00 C step in the plate moves the reading just 0.24 C
+  against 0.96 C with tape -- a **4x loss of signal**. No probe recovers signal
+  that never arrived at the sensor. Since Round 2 exists to test whether the Boson
+  resolves 1 C steps, and Round 1 already measured 0.56 C rms scatter on that very
+  test, a 4x signal loss puts a 1 C step at roughly the noise floor. The experiment
+  would be unable to answer its own question.
+
+A useful consistency check fell out of this: inverting Round 1's own "hotplate
+reads 10 C lower" observation gives eps ~ 0.22 for the bare surface, right in the
+range for lightly oxidised metal. An independent radiative model and the bench
+observation agree, which is good evidence the tape was doing what we assumed. I
+recommended keeping the tape, and -- guessing that the motive was my own Q23
+question about probe placement -- offered the cheaper fix of running the probe lead
+under the tape edge, since at 35-40 C the underside sits within ~0.1 C of the
+radiating face. Also offered high-emissivity paint or matte anodised plate
+(eps ~ 0.97) if the real motive was something else, e.g. tape lifting when hot.
+
+**Other items raised.** Q36: JXP approved scenario C, but that predates Rob's
+request to characterise External mode, so I re-asked C (3.1 h) vs C+ (3.4 h) and
+recommended C+, noting I will place the External block last so it is the easy thing
+to drop if the day runs long. Q37: the Round-1 notes contradict themselves on the
+ROI -- "30x30 square" versus "median of 115 pixels" -- which matters because noise
+averages as sqrt(N); recommended 30x30 = 900 px with ROI corners recorded in the run
+metadata. Q38/Q39: accepted JXP's twice-reaffirmed decision to keep all 70 GB of raw
+data, but put its two costs on the record -- the upload is 6.3 h at 25 Mbps and so
+cannot live inside a 30-min teardown (push reduced products first, bulk
+asynchronously), and 39 MB/s sustained writes with >100 GB free is a real
+requirement, so I will add a free-space check and a 30-second trial capture with a
+frame count as pre-flight steps, since silently dropped frames would corrupt timing
+with no visible error.
+
+**Blocking note.** The Google Drive connector dropped out of this session, so I
+cannot create the agreed Google Doc natively right now (Q40). Given the test is
+today I proposed defaulting to a Markdown draft in the repo that JXP can upload,
+with the native-doc route available if the connector is reconnected. Flagged that
+only Q35 (the tape) genuinely blocks, since it changes the physical rig; Q36, Q37
+and Q40 I can write around under stated assumptions (C+, 30x30, Markdown) and mark
+in the document for override.
+
+### 2026-09-24 (Lab work #4: wrote the Round-2 checklist)
+
+Executed the 4th task under "Prompts / Lab work". All of Q35-Q41 came back
+settled: keep the tape (Q35), scenario C+ at 3.4 h (Q36), 30x30 ROI (Q37), JXP
+handles data transfer and storage but wants the constraints highlighted in the
+document (Q38/Q39), Drive back online (Q40), SDK emissivity check written in as a
+step (Q41). Wrote the checklist and kept every supporting calculation on disk.
+
+**Deliverable**: `docs/lab_tests/Boson Experiment 2 Checklist.docx` -- 10 numbered
+sections, 54 checkbox steps, 18 bracketed rationale notes, 18 fill-in blanks, an
+18-row run sheet, and a one-page reference on the tape decision. Written as
+bench-side numbered steps for Rob and Christian with JXP present, per Q16/Q17.
+Generated by `docs/lab_tests/build_checklist.py`, committed alongside it so the
+document is reproducible rather than a hand-edited binary.
+
+**A discrepancy I found while writing the schedule, and fixed.** Scenario C+ was
+costed at 3.4 h, but that figure was wrong. My budget script carried a single line
+item called "T3 distance / scene-fill", and scenario C set `do_distance=False` to
+drop the distance re-test per Q27 -- which silently dropped the scene-fill test
+along with it, even though Q27's whole resolution was to *keep* scene-fill and
+drop only distance. Separated the two line items in `round2_time_budget.py`. The
+honest total is **3.7 h**, not 3.4 h. Rather than quietly re-cost it I put the
+correction in the document itself, with an explicit drop order for running late
+(T5 External -> T3 scene-fill -> the second T2 anchor), and a note that T1 and the
+body of T2 must not be cut -- T1 cannot be re-run without another cold start, and
+T2 is the reason Round 2 exists.
+
+**Structure of the checklist.** A five-rule callout up front covering the failure
+modes that would waste the day (camera stays unpowered until T1; keep the tape;
+manual FFC with logged timestamps; nobody in front of the rig; record gain every
+run). Then pre-flight (45 min, camera unpowered, including the free-space check
+and a 30-second trial capture with a frame count, since dropped frames corrupt
+timing silently), T1 warm-up drift from cold, T2 the randomised increment sweep,
+T3 scene-fill, T4 wind, T5 External-mode characterisation, run sheet, the tape
+reference, and teardown. Per Q39 the storage constraints are highlighted rather
+than solved: >100 GB free, 39 MB/s sustained, and the point that a ~71 GB upload
+takes 6.3 h at 25 Mbps so it cannot sit inside teardown -- small products first,
+bulk transfer afterwards.
+
+**Setpoint order** was pre-generated rather than left to the bench:
+`analysis/lab_tests/round2_setpoint_order.py`, seeded 20260924, giving
+ANCHOR 35 / 38 / 40 / 37 / 36 / 39 / 35 / ANCHOR 35. The two anchors bracket the
+run at an identical true temperature, so the difference between them measures the
+drift directly, and 35 C is visited three times, which doubles as a repeatability
+check. The table is printed in the document so nobody has to improvise.
+
+**Tooling note.** The machine has no Node, so the docx-js route in the docx skill
+was unavailable; installed `python-docx` into the `ocean14` environment and built
+the document that way. The skill's XSD validator initially failed on a `<w:zoom>`
+element missing its required `w:percent` attribute -- a quirk of python-docx's
+stock template, which Word tolerates but stricter consumers do not -- so the build
+script now post-processes `word/settings.xml` to add it. Validation passes.
+
+**Not done: the upload.** The prompt asked for the file at
+`GDrive:.../Lab Tests/Boson Experiment 2 Checklist.docx`. Despite Q40 ("I am back
+online"), the Google Drive connector is not present in this session -- I searched
+for its tools three times and got no match, and the session log shows the MCP
+server disconnected and only Claude Docs reconnecting. So the document exists
+locally at the path above and still needs to be uploaded to that Drive folder by
+hand. Everything else in the task is complete.

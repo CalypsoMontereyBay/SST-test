@@ -45,7 +45,7 @@ def sweep_minutes(settle: float, n_anchors: int) -> float:
 
 def scenario(name: str, settle: float, n_anchors: int,
              do_distance: bool, do_drift: bool, do_wind: bool,
-             do_external: bool = False) -> float:
+             do_external: bool = False, do_scenefill: bool = False) -> float:
     items = dict(FIXED_OVERHEAD)
 
     # Drift test: FFC disabled, camera powered on cold, staring at a stable
@@ -60,8 +60,15 @@ def scenario(name: str, settle: float, n_anchors: int,
     # Plate is already at 35 C and stays there, so only the camera moves:
     # no plate settling needed, just a short restabilise after each move.
     if do_distance:
-        items["T3 distance / scene-fill (5 configs, plate held at 35 C)"] = \
+        items["T3a distance re-test (5 configs, plate held at 35 C)"] = \
             5 * (1.0 + RECORD) + 5.0
+
+    # Q27/Q11: the distance re-test is dropped, but the scene-fill test that was
+    # entangled with it is NOT -- it is the version that bears on the ocean.
+    # Fixed distance, varying surround.
+    if do_scenefill:
+        items["T3b scene-fill / narcissus (4 surrounds at fixed 30 cm)"] = \
+            4 * (1.0 + RECORD) + 8.0
 
     if do_wind:
         items["T4 wind (4 configs + rig changes)"] = 4 * (1.0 + RECORD) + 10.0
@@ -115,11 +122,12 @@ if __name__ == "__main__":
              SETTLE_PROBE, ANCHORS_FULL, do_distance=True, do_drift=True, do_wind=True)
 
     scenario("C. Probe + bracketing anchors only + drop the distance re-test",
-             SETTLE_PROBE, ANCHORS_LIGHT, do_distance=False, do_drift=True, do_wind=True)
+             SETTLE_PROBE, ANCHORS_LIGHT, do_distance=False, do_drift=True, do_wind=True,
+             do_scenefill=True)
 
     scenario("C+. Scenario C plus Rob's External-mode characterisation block",
              SETTLE_PROBE, ANCHORS_LIGHT, do_distance=False, do_drift=True, do_wind=True,
-             do_external=True)
+             do_external=True, do_scenefill=True)
 
     scenario("D. C, but defer the FFC-disabled drift test to its own session",
              SETTLE_PROBE, ANCHORS_LIGHT, do_distance=False, do_drift=False, do_wind=True)
