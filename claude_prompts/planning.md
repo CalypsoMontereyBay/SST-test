@@ -384,7 +384,7 @@ are reproducible rather than asserted.
     not its flight magnitude, and I will label it that way. Is there a stronger
     airflow source available (shop blower, ducted fan)? If not, we extrapolate and
     say so.
->A. Agreed
+>A. Agreed, count on not having access to a stronger fan for now.
 
 **K. Data volume — this one is urgent and nobody has costed it**
 
@@ -402,7 +402,7 @@ are reproducible rather than asserted.
     320, and is it the 60 Hz or the 9 Hz variant?** The table in
     `round2_time_budget.py` spans 0.18 to 4.72 GB per run across those four cases —
     a 26x range, so it is not a detail.
->A [RW]
+>A. Boson R 640 x 512, 60 Hz variant.
 
 32. Given the above, my proposal for Q19: **reduced products and metadata to Drive**
     (per-run CSVs, the `fpatemp.py` logs, the recording sheet, a few sample frames),
